@@ -1,0 +1,1 @@
+- [Project handoff files](conversation-workspace-handoff.md) — after a conversation becomes a project, preserved uploaded project files may be under `.local/conversation-workspace/files`.

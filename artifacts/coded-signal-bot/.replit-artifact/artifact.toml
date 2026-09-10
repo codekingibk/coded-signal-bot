@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Coded Signal Bot"
+description = "A paid-access Aviator signal dashboard with Paystack checkout, secure access keys, anonymous customer sessions, referrals, streak rewards, and a protected signal terminal."
+version = "1.0.0"
+id = "artifacts/coded-signal-bot"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23164
+
+[services.development]
+run = "pnpm --filter @workspace/coded-signal-bot run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/coded-signal-bot", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/coded-signal-bot/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23164"
+BASE_PATH = "/"
