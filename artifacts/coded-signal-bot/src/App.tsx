@@ -109,7 +109,7 @@ function AviatorGate({ platform, onPlatformChange, country, onCountryChange, acc
         </form>
       </section>
       <p className="mt-6 text-center text-xs text-muted-foreground"><Zap size={13} className="mr-1 inline text-primary" />Secured with 256-bit encryption</p>
-      <div className="mt-5 flex justify-center gap-5 text-xs text-muted-foreground"><a href="#pricing" className="hover:text-primary">Purchase access</a><Link href="/admin" className="hover:text-primary">Admin console</Link></div>
+      <div className="mt-5 flex justify-center gap-5 text-xs text-muted-foreground"><Link href="/#pricing" className="hover:text-primary">Purchase access</Link><Link href="/admin" className="hover:text-primary">Admin console</Link></div>
     </div>
   </div>;
 }
@@ -122,31 +122,15 @@ function PublicNav() {
   return <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-5 py-5 sm:px-8"><Brand /><nav className="hidden items-center gap-6 text-sm text-muted-foreground sm:flex"><a className="hover:text-foreground" href="#how-it-works">How it works</a><a className="hover:text-foreground" href="#faq">FAQ</a><a className="hover:text-foreground" href="#pricing">Access</a></nav><Link href="/admin" className="focus-ring rounded-md px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground" data-testid="link-admin">Admin console <ArrowRight size={14} className="ml-1 inline" /></Link></header>;
 }
 
-function Landing() {
+function AccessPage() {
   const [, setLocation] = useLocation();
-  const { data: config, isLoading, isError } = useGetPublicConfig();
-  const { mutate: initializePayment, isPending: paymentPending, error: paymentError } = useInitializePayment();
   const { mutate: validateKey, isPending: validating } = useValidateAccessKey();
   const { mutate: activateKey, isPending: activating } = useActivateAccessKey();
-  const search = useSearch();
-  const ref = new URLSearchParams(search).get('reference') ?? '';
-  const verification = useVerifyPayment(ref, { query: { enabled: Boolean(ref), queryKey: getVerifyPaymentQueryKey(ref) } });
-  const [email, setEmail] = useState('');
-  const [referral, setReferral] = useState('');
   const [country, setCountry] = useState('');
   const [key, setKey] = useState('');
   const [platform, setPlatform] = useState<BettingPlatform>('msport');
   const [keyMessage, setKeyMessage] = useState<{ text: string; good: boolean } | null>(null);
-  const [openFaq, setOpenFaq] = useState<number | null>(0);
-  const [showAccess, setShowAccess] = useState(false);
-  const price = config ? (config.promoEnabled ? config.promoPrice : config.standardPrice) : 0;
 
-  const startPayment = (event: React.FormEvent) => {
-    event.preventDefault();
-    initializePayment({ data: { email, referralCode: referral || null } }, {
-      onSuccess: (result) => { window.location.href = result.authorizationUrl; },
-    });
-  };
   const submitKey = (event: React.FormEvent) => {
     event.preventDefault();
     setKeyMessage(null);
@@ -167,11 +151,33 @@ function Landing() {
 
   return <div className="aviator-page min-h-[100dvh] overflow-hidden bg-background">
     <AviatorGate platform={platform} onPlatformChange={setPlatform} country={country} onCountryChange={setCountry} accessKey={key} onAccessKeyChange={setKey} onSubmit={submitKey} pending={validating || activating} message={keyMessage} />
+  </div>;
+}
+
+function Landing() {
+  const { data: config, isLoading, isError } = useGetPublicConfig();
+  const { mutate: initializePayment, isPending: paymentPending, error: paymentError } = useInitializePayment();
+  const search = useSearch();
+  const ref = new URLSearchParams(search).get('reference') ?? '';
+  const verification = useVerifyPayment(ref, { query: { enabled: Boolean(ref), queryKey: getVerifyPaymentQueryKey(ref) } });
+  const [email, setEmail] = useState('');
+  const [referral, setReferral] = useState('');
+  const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const price = config ? (config.promoEnabled ? config.promoPrice : config.standardPrice) : 0;
+
+  const startPayment = (event: React.FormEvent) => {
+    event.preventDefault();
+    initializePayment({ data: { email, referralCode: referral || null } }, {
+      onSuccess: (result) => { window.location.href = result.authorizationUrl; },
+    });
+  };
+
+  return <div className="aviator-page min-h-[100dvh] overflow-hidden bg-background">
     <main>
       {ref && <section className="mx-auto max-w-6xl px-5 pt-6 sm:px-8"><div className={`rounded-xl border p-4 ${verification.isError || (verification.data && !verification.data.verified) ? 'border-destructive/30 bg-destructive/10' : 'border-primary/30 bg-primary/10'}`} data-testid="status-payment-verification">{verification.isLoading ? <span className="text-sm text-muted-foreground">Confirming your payment…</span> : verification.data?.verified ? <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"><div><div className="font-semibold">Payment confirmed. Your terminal is ready.</div><div className="text-sm text-muted-foreground">{verification.data.message}</div></div><div className="flex items-center gap-2"><code className="rounded bg-background px-3 py-2 text-sm text-primary">{verification.data.accessKey}</code><Button onClick={() => { if (verification.data?.accessKey) navigator.clipboard?.writeText(verification.data.accessKey); }} data-testid="button-copy-access-key"><Copy size={14} /> Copy</Button></div></div> : <span className="text-sm text-destructive">{verification.data?.message ?? 'Payment verification did not complete.'}</span>}</div></section>}
       <section className="relative mx-auto hidden max-w-6xl items-center gap-12 px-5 pb-24 pt-14 sm:px-8 lg:grid-cols-[1.1fr_.9fr] lg:pb-32 lg:pt-24">
         <div className="terminal-grid pointer-events-none absolute -left-48 -top-24 size-[38rem] rounded-full opacity-25 [mask-image:radial-gradient(circle,black,transparent_68%)]" />
-        <div className="relative animate-rise-in"><StatusDot label="Live terminal · mobile first" /><h1 className="mt-5 max-w-3xl text-5xl font-semibold leading-[.96] tracking-[-.075em] sm:text-7xl">Read the window.<br /><span className="text-primary">Move with signal.</span></h1><p className="mt-7 max-w-xl text-base leading-7 text-muted-foreground sm:text-lg">Coded Signal Bot is a paid-access Aviator signal terminal built for fast, clear decisions. No account maze. No noise. Just the next window, when it matters.</p><div className="mt-8 flex flex-wrap items-center gap-3"><a href="#pricing" className="focus-ring inline-flex min-h-12 items-center gap-2 rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground hover:brightness-105" data-testid="link-start-signal">Start your signal window <ArrowRight size={16} /></a><button onClick={() => setShowAccess(true)} className="focus-ring inline-flex min-h-12 items-center gap-2 rounded-lg border border-border px-5 text-sm font-semibold hover:bg-secondary" data-testid="button-open-access">I have an access key <KeyRound size={16} /></button></div><div className="mt-9 flex flex-wrap gap-x-6 gap-y-3 text-xs text-muted-foreground"><span className="inline-flex items-center gap-2"><ShieldCheck size={15} className="text-primary" /> Protected terminal</span><span className="inline-flex items-center gap-2"><Clock3 size={15} className="text-primary" /> {config ? `${Math.round(config.durationSeconds / 3600)} hour access` : 'Live window access'}</span></div></div>
+        <div className="relative animate-rise-in"><StatusDot label="Live terminal · mobile first" /><h1 className="mt-5 max-w-3xl text-5xl font-semibold leading-[.96] tracking-[-.075em] sm:text-7xl">Read the window.<br /><span className="text-primary">Move with signal.</span></h1><p className="mt-7 max-w-xl text-base leading-7 text-muted-foreground sm:text-lg">Coded Signal Bot is a paid-access signal terminal built for fast, clear decisions. No account maze. No noise. Just the next window, when it matters.</p><div className="mt-8 flex flex-wrap items-center gap-3"><a href="#pricing" className="focus-ring inline-flex min-h-12 items-center gap-2 rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground hover:brightness-105" data-testid="link-start-signal">Start your signal window <ArrowRight size={16} /></a><Link href="/access" className="focus-ring inline-flex min-h-12 items-center gap-2 rounded-lg border border-border px-5 text-sm font-semibold hover:bg-secondary" data-testid="link-open-access">I have an access key <KeyRound size={16} /></Link></div><div className="mt-9 flex flex-wrap gap-x-6 gap-y-3 text-xs text-muted-foreground"><span className="inline-flex items-center gap-2"><ShieldCheck size={15} className="text-primary" /> Protected terminal</span><span className="inline-flex items-center gap-2"><Clock3 size={15} className="text-primary" /> {config ? `${Math.round(config.durationSeconds / 3600)} hour access` : 'Live window access'}</span></div></div>
         <div className="relative animate-rise-in [animation-delay:120ms]"><div className="scanline rounded-2xl border border-border bg-card p-5 shadow-[0_24px_80px_rgba(0,0,0,.25)] sm:p-6"><div className="mb-7 flex items-center justify-between"><StatusDot label="Terminal preview" /><MoreHorizontal size={18} className="text-muted-foreground" /></div><div className="rounded-xl border border-primary/25 bg-primary/[.06] p-5"><div className="flex items-start justify-between"><div><div className="mono text-[10px] uppercase tracking-[.18em] text-muted-foreground">Current signal</div><div className="mt-3 text-6xl font-semibold tracking-[-.08em] text-primary">2.64<span className="ml-1 text-2xl">×</span></div></div><div className="rounded-full border border-primary/30 px-2 py-1 text-[10px] font-semibold uppercase tracking-widest text-primary">Ready</div></div><div className="mt-6 grid grid-cols-2 gap-3 border-t border-border pt-4 text-xs"><div><div className="text-muted-foreground">Window closes</div><div className="mono mt-1 text-foreground">00:18</div></div><div><div className="text-muted-foreground">Next signal</div><div className="mono mt-1 text-foreground">— — —</div></div></div></div><div className="mt-5 space-y-3"><div className="flex items-center justify-between text-xs"><span className="text-muted-foreground">Signal confidence</span><span className="mono text-primary">HIGH / VERIFIED</span></div><div className="h-1.5 overflow-hidden rounded-full bg-secondary"><div className="h-full w-[78%] rounded-full bg-primary" /></div><div className="flex items-center justify-between text-[11px] text-muted-foreground"><span>Session protected</span><span>Updates every cycle</span></div></div></div></div>
       </section>
 
@@ -183,7 +189,6 @@ function Landing() {
       <section className="mx-auto max-w-6xl px-5 pb-20 sm:px-8"><div className="flex flex-col items-start justify-between gap-5 rounded-2xl border border-accent/25 bg-accent/[.06] p-6 sm:flex-row sm:items-center sm:p-8"><div><div className="flex items-center gap-2 text-sm font-semibold"><MessageCircle size={17} className="text-accent" /> Need a hand?</div><p className="mt-2 text-sm text-muted-foreground">Reach the signal desk on WhatsApp for payment or access support.</p></div><a href={config?.whatsappUrl || '#'} target="_blank" rel="noreferrer" className="focus-ring inline-flex min-h-11 items-center gap-2 rounded-lg border border-accent/40 px-4 text-sm font-semibold text-accent hover:bg-accent/10" data-testid="link-whatsapp">Open WhatsApp <ExternalLink size={14} /></a></div></section>
       <footer className="border-t border-border px-5 py-8 sm:px-8"><div className="mx-auto flex max-w-6xl flex-col gap-4 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between"><span>© {new Date().getFullYear()} Coded Signal Bot</span><span className="max-w-xl leading-5">Responsible use: signals are informational, not financial advice or guaranteed outcomes. Only use funds you can afford to lose.</span></div></footer>
     </main>
-    {showAccess && <div className="fixed inset-0 z-50 grid place-items-center bg-background/80 p-5 backdrop-blur-sm"><div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl"><div className="flex items-start justify-between"><div><div className="text-[11px] font-semibold uppercase tracking-[.18em] text-primary">Platform access</div><h2 className="mt-2 text-2xl font-semibold tracking-[-.05em]">Choose a platform to continue.</h2><p className="mt-2 text-sm leading-6 text-muted-foreground">Select your betting platform and enter the access code shared with you.</p></div><button onClick={() => setShowAccess(false)} className="focus-ring rounded-md p-2 text-muted-foreground hover:bg-secondary" data-testid="button-close-access"><X size={18} /></button></div><form onSubmit={submitKey} className="mt-6 grid gap-4"><PlatformSelector value={platform} onChange={setPlatform} /><Field label={`${platform === 'msport' ? 'MSport' : 'SportyBet'} access code`} required minLength={8} placeholder="CSB-••••-••••" value={key} onChange={(e) => setKey(e.target.value)} data-testid="input-platform-access-code" />{keyMessage && <p className={`text-sm ${keyMessage.good ? 'text-primary' : 'text-destructive'}`} data-testid="status-access-key">{keyMessage.text}</p>}<Button type="submit" disabled={validating || activating || key.length < 8} data-testid="button-activate-access">{validating || activating ? 'Checking…' : `View ${platform === 'msport' ? 'MSport' : 'SportyBet'} signal`} <ArrowRight size={15} /></Button></form><p className="mt-5 text-xs leading-5 text-muted-foreground">Your code is used only to activate the protected signal window for this session.</p></div></div>}
   </div>;
 }
 
@@ -330,7 +335,7 @@ function AviatorSignalDashboard({ platform, referral }: { platform: BettingPlatf
     const now = new Date();
     const candidate = new Date();
     candidate.setHours(hours, minutes, 0, 0);
-    setStartedAt(candidate < now ? now : candidate);
+    setStartedAt(candidate < now ? candidate : now);
     setRunning(true);
     setSignal(null);
     setHistory([]);
@@ -434,14 +439,13 @@ function AviatorSignalDashboard({ platform, referral }: { platform: BettingPlatf
             <button type="button" className="aviator-button flex w-full items-center justify-center gap-3" onClick={initialize} disabled={!recentMultipliers.trim() || !startTime} data-testid="button-initialize-system"><Zap size={19} />Initialize System</button>
           </div>
         </section>
-        <div className="grid grid-cols-3 gap-3">{[['2 MIN', '2x - 3x', 'text-primary'], ['5 MIN', '3x - 5x', 'text-[hsl(30_100%_55%)]'], ['7 MIN', '5x - 15x', 'text-accent']].map(([interval, range, color]) => <div key={interval} className="aviator-card p-4 text-center"><p className="text-xs uppercase text-muted-foreground">{interval}</p><p className={`mt-1 font-orbitron text-base ${color}`}>{range}</p></div>)}</div>
       </div> : <div className="space-y-6">
         <div className="flex justify-end"><button type="button" onClick={() => setSoundOff((current) => !current)} className="focus-ring inline-flex items-center gap-2 rounded-lg border border-primary/10 bg-secondary/50 px-4 py-2 text-sm" data-testid="button-sound-toggle">{soundOff ? <VolumeX size={18} className="text-muted-foreground" /> : <Volume2 size={18} className="text-primary" />}{soundOff ? 'Sound Off' : 'Sound On'}</button></div>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">{[['Total Signals', totalSignals.toString(), 'text-primary'], ['Session Time', formatSessionTime(elapsedSeconds), 'text-accent'], ['Cycle Progress', `${Math.round(cycleProgress)}%`, 'text-[hsl(30_100%_55%)]'], ['Next Signal', nextSignalIn === null ? '--' : `${nextSignalIn}s`, 'text-accent']].map(([label, value, color]) => <div key={label} className="aviator-card p-4"><div className="text-xs uppercase tracking-wider text-muted-foreground">{label}</div><div className={`mt-2 font-orbitron text-lg ${color}`}>{value}</div></div>)}</div>
         <section className="aviator-card p-5 md:p-7">
           <div className="mb-3 flex items-center justify-between"><span className="text-xs uppercase tracking-wider text-muted-foreground">{sleeping ? 'Rest Period' : 'Active Cycle'}</span><span className="font-orbitron text-xs text-primary">{Math.round(cycleProgress)}%</span></div>
           <div className="h-3 overflow-hidden rounded-full bg-[#14181f]"><div className="h-full rounded-full bg-gradient-to-r from-primary via-[hsl(30_100%_55%)] to-destructive transition-all" style={{ width: `${cycleProgress}%` }} /></div>
-          <div className="mt-3 text-xs text-muted-foreground">{sleeping ? `System resting · next cycle in ${formatTime(sleepTimeRemaining)}` : 'Signal windows are evaluated at the exact 2, 5, and 7 minute boundaries.'}</div>
+          <div className="mt-3 text-xs text-muted-foreground">{sleeping ? `System resting · next cycle in ${formatTime(sleepTimeRemaining)}` : 'Signal windows are evaluated continuously during the active cycle.'}</div>
         </section>
         <section className={`aviator-card p-8 text-center md:p-12 ${signal ? `aviator-signal-${signal.type}` : ''}`} data-testid="signal-display">
           {sleeping ? <><div className="font-orbitron text-2xl text-muted-foreground">REST PERIOD</div><p className="mt-3 text-sm text-muted-foreground">No signal is active during the 15-minute recovery window.</p><div className="mt-6 font-orbitron text-3xl text-accent">{formatTime(sleepTimeRemaining)}</div></> : signal ? <><div className={`font-orbitron text-5xl font-bold ${signal.type === 'high' ? 'text-destructive' : signal.type === 'medium' ? 'text-[hsl(30_100%_55%)]' : 'text-primary'}`}>{signal.message}</div><div className="mt-5 font-orbitron text-4xl text-foreground">{signal.multiplier}</div><div className="mt-3 text-xs uppercase tracking-[.25em] text-muted-foreground">Signal expires in {countdown}s</div></> : <><div className="font-orbitron text-3xl text-muted-foreground">SCANNING</div><p className="mt-3 text-sm text-muted-foreground">Monitoring the active 30-minute cycle.</p><div className="mx-auto mt-6 size-3 animate-pulse rounded-full bg-primary shadow-[0_0_20px_hsl(var(--primary)/.8)]" /></>}
@@ -548,6 +552,6 @@ function PaymentsPanel({ payments, isLoading }: { payments?: PaymentRecord[]; is
 }
 
 function RoutedErrorBoundary({ children }: { children: ReactNode }) { const [location] = useLocation(); return <ErrorBoundary resetKey={location}>{children}</ErrorBoundary>; }
-function Router() { return <RoutedErrorBoundary><Switch><Route path="/" component={Landing} /><Route path="/dashboard" component={Dashboard} /><Route path="/admin" component={Admin} /><Route component={NotFound} /></Switch></RoutedErrorBoundary>; }
+function Router() { return <RoutedErrorBoundary><Switch><Route path="/" component={Landing} /><Route path="/access" component={AccessPage} /><Route path="/dashboard" component={Dashboard} /><Route path="/admin" component={Admin} /><Route component={NotFound} /></Switch></RoutedErrorBoundary>; }
 function App() { return <QueryClientProvider client={queryClient}><TooltipProvider><Router /><Toaster /></TooltipProvider></QueryClientProvider>; }
 export default App;
