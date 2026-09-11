@@ -99,7 +99,7 @@ function AviatorGate({ platform, onPlatformChange, country, onCountryChange, acc
     <div className="relative z-10 w-full max-w-xl">
       <section className="aviator-gate-frame p-6 sm:p-8">
         <div className="mx-auto mb-6 grid size-20 place-items-center rounded-full border border-primary/70 text-primary shadow-[0_0_25px_hsl(var(--primary)/.25)]"><Activity size={35} /></div>
-        <div className="text-center"><h1 className="font-orbitron text-3xl font-bold text-primary drop-shadow-[0_0_12px_hsl(var(--primary)/.8)] sm:text-4xl">AVIATOR PRO</h1><p className="mt-2 text-sm uppercase tracking-[.18em] text-muted-foreground">Premium signal system v3.0</p></div>
+        <div className="text-center"><h1 className="font-orbitron text-3xl font-bold text-primary drop-shadow-[0_0_12px_hsl(var(--primary)/.8)] sm:text-4xl">CODED SIGNAL BOT</h1><p className="mt-2 text-sm uppercase tracking-[.18em] text-muted-foreground">Premium signal system v3.0</p></div>
         <form onSubmit={onSubmit} className="mt-8 space-y-5">
           <div className="grid gap-2"><span className="flex items-center gap-2 text-sm uppercase tracking-wider text-muted-foreground"><Globe2 size={16} className="text-primary" />Betting platform</span><div className="grid grid-cols-2 gap-2">{bettingPlatforms.map((option) => <button key={option.value} type="button" onClick={() => onPlatformChange(option.value)} aria-pressed={platform === option.value} className={`aviator-input text-left text-sm ${platform === option.value ? 'border-primary text-primary shadow-[0_0_16px_hsl(var(--primary)/.16)]' : 'text-muted-foreground'}`} data-testid={`button-gate-platform-${option.value}`}>{option.label}</button>)}</div></div>
           <label className="grid gap-2 text-sm uppercase tracking-wider text-muted-foreground"><span className="flex items-center gap-2"><Users size={16} className="text-primary" />Country</span><input className="aviator-input w-full" value={country} onChange={(event) => onCountryChange(event.target.value)} placeholder="e.g., Nigeria, Kenya, Ghana" data-testid="input-country" /></label>
@@ -422,7 +422,7 @@ function AviatorSignalDashboard({ platform, referral }: { platform: BettingPlatf
     <AviatorParticles />
     <div className="relative z-10 mx-auto min-h-[100dvh] max-w-4xl px-4 py-5 md:px-6 md:py-8">
       <div className="mb-8 flex items-center justify-between gap-4">
-        <div><div className="font-orbitron text-xs font-bold tracking-[.22em] text-primary">AVIATOR PRO</div><div className="mt-1 text-[10px] uppercase tracking-[.25em] text-muted-foreground">Premium signal system v3.0</div></div>
+        <div><div className="font-orbitron text-xs font-bold tracking-[.22em] text-primary">CODED SIGNAL BOT</div><div className="mt-1 text-[10px] uppercase tracking-[.25em] text-muted-foreground">Premium signal system v3.0</div></div>
         <div className="text-right text-[10px] uppercase tracking-wider text-muted-foreground"><div className="text-primary">{platform === 'msport' ? 'MSport' : 'SportyBet'}</div><div>Protected terminal</div></div>
       </div>
       {!running ? <div className="space-y-6">
