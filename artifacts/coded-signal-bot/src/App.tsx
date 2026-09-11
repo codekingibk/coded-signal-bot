@@ -218,7 +218,7 @@ function AviatorParticles() {
       vy: (Math.random() - .5) * .5,
       size: Math.random() * 2 + 1,
       alpha: Math.random() * .5 + .1,
-      color: ['#FFD700', '#FF4444', '#00FFFF'][Math.floor(Math.random() * 3)],
+      color: ['#00D9FF', '#FF4444', '#7AA7FF'][Math.floor(Math.random() * 3)],
     }));
     const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
     resize();
@@ -248,7 +248,7 @@ function AviatorParticles() {
             context.beginPath();
             context.moveTo(particles[index].x, particles[index].y);
             context.lineTo(particles[other].x, particles[other].y);
-            context.strokeStyle = `rgba(255, 215, 0, ${.1 * (1 - distance / 150)})`;
+            context.strokeStyle = `rgba(0, 217, 255, ${.1 * (1 - distance / 150)})`;
             context.lineWidth = .5;
             context.stroke();
           }
