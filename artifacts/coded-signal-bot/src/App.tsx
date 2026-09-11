@@ -1,22 +1,23 @@
-import { type ReactNode, useEffect, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import {
-  Activity, ArrowRight, BarChart3, Check, ChevronDown, Clock3, Copy,
+  Activity, ArrowRight, BarChart3, Check, ChevronDown, Clock3, Copy, Globe2,
   ExternalLink, KeyRound, LogIn, LogOut, MessageCircle, MoreHorizontal,
-  RefreshCw, ShieldCheck, Sparkles, Ticket, TrendingUp, Users, X,
+  RefreshCw, ShieldCheck, Sparkles, Ticket, TrendingUp, Users, Volume2,
+  VolumeX, X, Zap,
 } from 'lucide-react';
 import { Link, Route, Switch, useLocation, useSearch } from 'wouter';
 import {
-  getGetAccessStatusQueryKey, getGetAdminOverviewQueryKey, getGetCurrentSignalQueryKey,
+  getGetAccessStatusQueryKey, getGetAdminOverviewQueryKey,
   getGetReferralProgressQueryKey, getGetSignalHistoryQueryKey, getGetStreakQueryKey,
   getGetAdminSessionQueryKey, getListAccessCodesQueryKey, getVerifyPaymentQueryKey, useActivateAccessKey, useAdminLogin,
   useAdminLogout, useChangeAdminPassword, useGenerateGiveawayCodes, useGetAccessStatus,
-  useGetAdminOverview, useGetAdminSession, useGetCurrentSignal, useGetPublicConfig,
-  useGetReferralProgress, useGetSignalHistory, useGetStreak, useInitializePayment,
+  useGetAdminOverview, useGetAdminSession, useGetPublicConfig,
+  useGetReferralProgress, useGetStreak, useInitializePayment,
   useListAccessCodes, useListPayments, useLogoutAccess, useRevokeAccessCode,
   useUpdatePricing, useValidateAccessKey, useVerifyPayment,
 } from '@workspace/api-client-react';
-import type { AccessCode, AdminOverview, GeneratedCode, PaymentRecord, SignalRecord } from '@workspace/api-client-react';
+import type { AccessCode, AdminOverview, GeneratedCode, PaymentRecord } from '@workspace/api-client-react';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -82,6 +83,37 @@ function PlatformSelector({ value, onChange }: { value: BettingPlatform; onChang
   </div>;
 }
 
+function AviatorGate({ platform, onPlatformChange, country, onCountryChange, accessKey, onAccessKeyChange, onSubmit, pending, message }: {
+  platform: BettingPlatform;
+  onPlatformChange: (value: BettingPlatform) => void;
+  country: string;
+  onCountryChange: (value: string) => void;
+  accessKey: string;
+  onAccessKeyChange: (value: string) => void;
+  onSubmit: (event: React.FormEvent) => void;
+  pending: boolean;
+  message: { text: string; good: boolean } | null;
+}) {
+  return <div className="aviator-shell grid min-h-[100dvh] place-items-center px-4 py-8">
+    <AviatorParticles />
+    <div className="relative z-10 w-full max-w-xl">
+      <section className="aviator-gate-frame p-6 sm:p-8">
+        <div className="mx-auto mb-6 grid size-20 place-items-center rounded-full border border-primary/70 text-primary shadow-[0_0_25px_hsl(var(--primary)/.25)]"><Activity size={35} /></div>
+        <div className="text-center"><h1 className="font-orbitron text-3xl font-bold text-primary drop-shadow-[0_0_12px_hsl(var(--primary)/.8)] sm:text-4xl">AVIATOR PRO</h1><p className="mt-2 text-sm uppercase tracking-[.18em] text-muted-foreground">Premium signal system v3.0</p></div>
+        <form onSubmit={onSubmit} className="mt-8 space-y-5">
+          <div className="grid gap-2"><span className="flex items-center gap-2 text-sm uppercase tracking-wider text-muted-foreground"><Globe2 size={16} className="text-primary" />Betting platform</span><div className="grid grid-cols-2 gap-2">{bettingPlatforms.map((option) => <button key={option.value} type="button" onClick={() => onPlatformChange(option.value)} aria-pressed={platform === option.value} className={`aviator-input text-left text-sm ${platform === option.value ? 'border-primary text-primary shadow-[0_0_16px_hsl(var(--primary)/.16)]' : 'text-muted-foreground'}`} data-testid={`button-gate-platform-${option.value}`}>{option.label}</button>)}</div></div>
+          <label className="grid gap-2 text-sm uppercase tracking-wider text-muted-foreground"><span className="flex items-center gap-2"><Users size={16} className="text-primary" />Country</span><input className="aviator-input w-full" value={country} onChange={(event) => onCountryChange(event.target.value)} placeholder="e.g., Nigeria, Kenya, Ghana" data-testid="input-country" /></label>
+          <label className="grid gap-2 text-sm uppercase tracking-wider text-muted-foreground"><span className="flex items-center gap-2"><KeyRound size={16} className="text-primary" />Access key</span><input className="aviator-input w-full" required minLength={8} value={accessKey} onChange={(event) => onAccessKeyChange(event.target.value)} placeholder="Enter your access key" data-testid="input-gate-access-key" /></label>
+          {message && <p className={`text-sm ${message.good ? 'text-primary' : 'text-destructive'}`} data-testid="status-gate-access">{message.text}</p>}
+          <button type="submit" disabled={pending || !country.trim() || accessKey.length < 8} className="aviator-button flex w-full items-center justify-center gap-3" data-testid="button-gate-initialize"><Zap size={19} />{pending ? 'Initializing…' : 'Initialize System'}</button>
+        </form>
+      </section>
+      <p className="mt-6 text-center text-xs text-muted-foreground"><Zap size={13} className="mr-1 inline text-primary" />Secured with 256-bit encryption</p>
+      <div className="mt-5 flex justify-center gap-5 text-xs text-muted-foreground"><a href="#pricing" className="hover:text-primary">Purchase access</a><Link href="/admin" className="hover:text-primary">Admin console</Link></div>
+    </div>
+  </div>;
+}
+
 function PageHeader({ title, eyebrow, children }: { title: string; eyebrow: string; children?: ReactNode }) {
   return <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><div className="mb-2 text-[11px] font-semibold uppercase tracking-[.18em] text-primary">{eyebrow}</div><h1 className="text-3xl font-semibold tracking-[-.055em] sm:text-4xl">{title}</h1></div>{children}</div>;
 }
@@ -101,6 +133,7 @@ function Landing() {
   const verification = useVerifyPayment(ref, { query: { enabled: Boolean(ref), queryKey: getVerifyPaymentQueryKey(ref) } });
   const [email, setEmail] = useState('');
   const [referral, setReferral] = useState('');
+  const [country, setCountry] = useState('');
   const [key, setKey] = useState('');
   const [platform, setPlatform] = useState<BettingPlatform>('msport');
   const [keyMessage, setKeyMessage] = useState<{ text: string; good: boolean } | null>(null);
@@ -121,7 +154,10 @@ function Landing() {
       onSuccess: (result) => {
         if (!result.valid) { setKeyMessage({ text: `This key is ${result.status.toLowerCase()}.`, good: false }); return; }
         activateKey({ data: { key: key.trim() } }, {
-          onSuccess: () => { setLocation(`/dashboard?platform=${platform}`); },
+          onSuccess: () => {
+            window.sessionStorage.setItem('csb_platform', platform);
+            setLocation('/dashboard');
+          },
           onError: () => setKeyMessage({ text: 'We could not activate that key. Try again.', good: false }),
         });
       },
@@ -129,11 +165,11 @@ function Landing() {
     });
   };
 
-  return <div className="min-h-[100dvh] overflow-hidden bg-background">
-    <PublicNav />
+  return <div className="aviator-page min-h-[100dvh] overflow-hidden bg-background">
+    <AviatorGate platform={platform} onPlatformChange={setPlatform} country={country} onCountryChange={setCountry} accessKey={key} onAccessKeyChange={setKey} onSubmit={submitKey} pending={validating || activating} message={keyMessage} />
     <main>
       {ref && <section className="mx-auto max-w-6xl px-5 pt-6 sm:px-8"><div className={`rounded-xl border p-4 ${verification.isError || (verification.data && !verification.data.verified) ? 'border-destructive/30 bg-destructive/10' : 'border-primary/30 bg-primary/10'}`} data-testid="status-payment-verification">{verification.isLoading ? <span className="text-sm text-muted-foreground">Confirming your payment…</span> : verification.data?.verified ? <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"><div><div className="font-semibold">Payment confirmed. Your terminal is ready.</div><div className="text-sm text-muted-foreground">{verification.data.message}</div></div><div className="flex items-center gap-2"><code className="rounded bg-background px-3 py-2 text-sm text-primary">{verification.data.accessKey}</code><Button onClick={() => { if (verification.data?.accessKey) navigator.clipboard?.writeText(verification.data.accessKey); }} data-testid="button-copy-access-key"><Copy size={14} /> Copy</Button></div></div> : <span className="text-sm text-destructive">{verification.data?.message ?? 'Payment verification did not complete.'}</span>}</div></section>}
-      <section className="relative mx-auto grid max-w-6xl items-center gap-12 px-5 pb-24 pt-14 sm:px-8 lg:grid-cols-[1.1fr_.9fr] lg:pb-32 lg:pt-24">
+      <section className="relative mx-auto hidden max-w-6xl items-center gap-12 px-5 pb-24 pt-14 sm:px-8 lg:grid-cols-[1.1fr_.9fr] lg:pb-32 lg:pt-24">
         <div className="terminal-grid pointer-events-none absolute -left-48 -top-24 size-[38rem] rounded-full opacity-25 [mask-image:radial-gradient(circle,black,transparent_68%)]" />
         <div className="relative animate-rise-in"><StatusDot label="Live terminal · mobile first" /><h1 className="mt-5 max-w-3xl text-5xl font-semibold leading-[.96] tracking-[-.075em] sm:text-7xl">Read the window.<br /><span className="text-primary">Move with signal.</span></h1><p className="mt-7 max-w-xl text-base leading-7 text-muted-foreground sm:text-lg">Coded Signal Bot is a paid-access Aviator signal terminal built for fast, clear decisions. No account maze. No noise. Just the next window, when it matters.</p><div className="mt-8 flex flex-wrap items-center gap-3"><a href="#pricing" className="focus-ring inline-flex min-h-12 items-center gap-2 rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground hover:brightness-105" data-testid="link-start-signal">Start your signal window <ArrowRight size={16} /></a><button onClick={() => setShowAccess(true)} className="focus-ring inline-flex min-h-12 items-center gap-2 rounded-lg border border-border px-5 text-sm font-semibold hover:bg-secondary" data-testid="button-open-access">I have an access key <KeyRound size={16} /></button></div><div className="mt-9 flex flex-wrap gap-x-6 gap-y-3 text-xs text-muted-foreground"><span className="inline-flex items-center gap-2"><ShieldCheck size={15} className="text-primary" /> Protected terminal</span><span className="inline-flex items-center gap-2"><Clock3 size={15} className="text-primary" /> {config ? `${Math.round(config.durationSeconds / 3600)} hour access` : 'Live window access'}</span></div></div>
         <div className="relative animate-rise-in [animation-delay:120ms]"><div className="scanline rounded-2xl border border-border bg-card p-5 shadow-[0_24px_80px_rgba(0,0,0,.25)] sm:p-6"><div className="mb-7 flex items-center justify-between"><StatusDot label="Terminal preview" /><MoreHorizontal size={18} className="text-muted-foreground" /></div><div className="rounded-xl border border-primary/25 bg-primary/[.06] p-5"><div className="flex items-start justify-between"><div><div className="mono text-[10px] uppercase tracking-[.18em] text-muted-foreground">Current signal</div><div className="mt-3 text-6xl font-semibold tracking-[-.08em] text-primary">2.64<span className="ml-1 text-2xl">×</span></div></div><div className="rounded-full border border-primary/30 px-2 py-1 text-[10px] font-semibold uppercase tracking-widest text-primary">Ready</div></div><div className="mt-6 grid grid-cols-2 gap-3 border-t border-border pt-4 text-xs"><div><div className="text-muted-foreground">Window closes</div><div className="mono mt-1 text-foreground">00:18</div></div><div><div className="text-muted-foreground">Next signal</div><div className="mono mt-1 text-foreground">— — —</div></div></div></div><div className="mt-5 space-y-3"><div className="flex items-center justify-between text-xs"><span className="text-muted-foreground">Signal confidence</span><span className="mono text-primary">HIGH / VERIFIED</span></div><div className="h-1.5 overflow-hidden rounded-full bg-secondary"><div className="h-full w-[78%] rounded-full bg-primary" /></div><div className="flex items-center justify-between text-[11px] text-muted-foreground"><span>Session protected</span><span>Updates every cycle</span></div></div></div></div>
@@ -159,34 +195,277 @@ function Stat({ label, value, detail, tone = 'default' }: { label: string; value
   return <div className="rounded-xl border border-border bg-card p-4"><div className="text-[10px] font-semibold uppercase tracking-[.16em] text-muted-foreground">{label}</div><div className={`mt-3 text-2xl font-semibold tracking-[-.06em] ${tone === 'good' ? 'text-primary' : tone === 'bad' ? 'text-destructive' : ''}`} data-testid={`text-stat-${label.toLowerCase().replaceAll(' ', '-')}`}>{value}</div>{detail && <div className="mt-1 text-xs text-muted-foreground">{detail}</div>}</div>;
 }
 
+type AviatorSignalType = 'low' | 'medium' | 'high';
+type AviatorSignal = {
+  id: string;
+  type: AviatorSignalType;
+  message: 'PLAY NOW';
+  multiplier: '2x - 3x' | '3x - 5x' | '5x - 15x';
+  time: Date;
+};
+
+function AviatorParticles() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const context = canvas?.getContext('2d');
+    if (!canvas || !context) return;
+    let frame = 0;
+    const particles = Array.from({ length: 50 }, () => ({
+      x: Math.random() * window.innerWidth,
+      y: Math.random() * window.innerHeight,
+      vx: (Math.random() - .5) * .5,
+      vy: (Math.random() - .5) * .5,
+      size: Math.random() * 2 + 1,
+      alpha: Math.random() * .5 + .1,
+      color: ['#FFD700', '#FF4444', '#00FFFF'][Math.floor(Math.random() * 3)],
+    }));
+    const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+    resize();
+    window.addEventListener('resize', resize);
+    const draw = () => {
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach((particle) => {
+        particle.x += particle.vx;
+        particle.y += particle.vy;
+        if (particle.x < 0) particle.x = canvas.width;
+        if (particle.x > canvas.width) particle.x = 0;
+        if (particle.y < 0) particle.y = canvas.height;
+        if (particle.y > canvas.height) particle.y = 0;
+        context.beginPath();
+        context.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+        context.fillStyle = particle.color;
+        context.globalAlpha = particle.alpha;
+        context.fill();
+        context.globalAlpha = 1;
+      });
+      for (let index = 0; index < particles.length; index += 1) {
+        for (let other = index + 1; other < particles.length; other += 1) {
+          const dx = particles[index].x - particles[other].x;
+          const dy = particles[index].y - particles[other].y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          if (distance < 150) {
+            context.beginPath();
+            context.moveTo(particles[index].x, particles[index].y);
+            context.lineTo(particles[other].x, particles[other].y);
+            context.strokeStyle = `rgba(255, 215, 0, ${.1 * (1 - distance / 150)})`;
+            context.lineWidth = .5;
+            context.stroke();
+          }
+        }
+      }
+      frame = window.requestAnimationFrame(draw);
+    };
+    draw();
+    return () => { window.removeEventListener('resize', resize); window.cancelAnimationFrame(frame); };
+  }, []);
+  return <canvas ref={canvasRef} className="pointer-events-none fixed inset-0 z-0 opacity-60" aria-hidden="true" />;
+}
+
+function playAviatorTone() {
+  try {
+    const AudioContextCtor = window.AudioContext ?? (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioContextCtor) return;
+    const audio = new AudioContextCtor();
+    const first = audio.createOscillator();
+    const second = audio.createOscillator();
+    const gain = audio.createGain();
+    first.connect(gain); second.connect(gain); gain.connect(audio.destination);
+    first.frequency.setValueAtTime(880, audio.currentTime);
+    first.frequency.setValueAtTime(1100, audio.currentTime + .1);
+    first.frequency.setValueAtTime(1320, audio.currentTime + .2);
+    second.frequency.setValueAtTime(440, audio.currentTime);
+    second.frequency.setValueAtTime(550, audio.currentTime + .1);
+    second.frequency.setValueAtTime(660, audio.currentTime + .2);
+    gain.gain.setValueAtTime(.2, audio.currentTime);
+    gain.gain.exponentialRampToValueAtTime(.4, audio.currentTime + .1);
+    gain.gain.exponentialRampToValueAtTime(.01, audio.currentTime + .6);
+    first.start(); second.start(); first.stop(audio.currentTime + .6); second.stop(audio.currentTime + .6);
+  } catch {
+    // Browsers may block audio until the first user interaction.
+  }
+}
+
+function formatSessionTime(seconds: number) {
+  return `${Math.floor(seconds / 60).toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}`;
+}
+
+function ReferralCard({ code, confirmed, required, rewardIssued }: { code?: string; confirmed: number; required: number; rewardIssued: boolean }) {
+  const [copied, setCopied] = useState(false);
+  const referralLink = code ? `${window.location.origin}/?ref=${encodeURIComponent(code)}` : '';
+  const copyReferral = async () => {
+    if (!referralLink) return;
+    await navigator.clipboard?.writeText(referralLink);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1800);
+  };
+  return <section className="aviator-card p-5" data-testid="card-referral">
+    <div className="flex items-center justify-between gap-3"><div className="flex items-center gap-2 text-sm font-semibold"><Users size={17} className="text-primary" />Referral path</div><Sparkles size={17} className="text-primary" /></div>
+    <div className="mt-5 flex items-end justify-between"><div><div className="font-orbitron text-3xl text-primary">{confirmed} / {required}</div><div className="mt-1 text-xs text-muted-foreground">{rewardIssued ? 'Reward issued' : 'confirmed referrals'}</div></div><span className="text-xs uppercase tracking-wider text-muted-foreground">Progress</span></div>
+    <div className="mt-5 h-2 overflow-hidden rounded-full bg-[#14181f]"><div className="h-full rounded-full bg-gradient-to-r from-primary to-accent transition-all" style={{ width: `${Math.min(100, (confirmed / Math.max(required, 1)) * 100)}%` }} /></div>
+    {code ? <div className="mt-4 flex items-center gap-2 rounded-lg border border-primary/20 bg-background/60 p-2"><code className="min-w-0 flex-1 truncate font-mono text-xs text-primary">{referralLink}</code><button type="button" onClick={copyReferral} className="focus-ring inline-flex min-h-9 shrink-0 items-center gap-2 rounded-md bg-primary/10 px-3 text-xs font-semibold text-primary hover:bg-primary/20" data-testid="button-copy-referral-link"><Copy size={14} />{copied ? 'Copied' : 'Copy link'}</button></div> : <p className="mt-4 text-xs text-muted-foreground">Your referral link is being prepared.</p>}
+  </section>;
+}
+
+function AviatorSignalDashboard({ platform, referral }: { platform: BettingPlatform; referral: { data?: { code?: string; confirmed: number; required: number; rewardIssued: boolean } } }) {
+  const [recentMultipliers, setRecentMultipliers] = useState('');
+  const [startTime, setStartTime] = useState('');
+  const [running, setRunning] = useState(false);
+  const [startedAt, setStartedAt] = useState<Date | null>(null);
+  const [soundOff, setSoundOff] = useState(false);
+  const [signal, setSignal] = useState<AviatorSignal | null>(null);
+  const [history, setHistory] = useState<AviatorSignal[]>([]);
+  const [totalSignals, setTotalSignals] = useState(0);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [cycleProgress, setCycleProgress] = useState(0);
+  const [nextSignalIn, setNextSignalIn] = useState<number | null>(null);
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const [sleeping, setSleeping] = useState(false);
+  const [sleepTimeRemaining, setSleepTimeRemaining] = useState(0);
+  const eventTimes = useRef<Record<string, number>>({});
+
+  const initialize = () => {
+    if (!recentMultipliers.trim() || !startTime) return;
+    const [hours, minutes] = startTime.split(':').map(Number);
+    const now = new Date();
+    const candidate = new Date();
+    candidate.setHours(hours, minutes, 0, 0);
+    setStartedAt(candidate < now ? now : candidate);
+    setRunning(true);
+    setSignal(null);
+    setHistory([]);
+    setTotalSignals(0);
+    setElapsedSeconds(0);
+    setCycleProgress(0);
+    setNextSignalIn(null);
+    setCountdown(null);
+    setSleeping(false);
+    setSleepTimeRemaining(0);
+    eventTimes.current = {};
+  };
+
+  const terminate = () => {
+    setRunning(false);
+    setSignal(null);
+    setHistory([]);
+    setSleeping(false);
+    setStartedAt(null);
+    setCycleProgress(0);
+    setNextSignalIn(null);
+    setCountdown(null);
+  };
+
+  useEffect(() => {
+    if (!running || !startedAt) return;
+    const timer = window.setInterval(() => {
+      const elapsedMs = Date.now() - startedAt.getTime();
+      const elapsed = Math.floor(elapsedMs / 1000);
+      const minutesElapsed = elapsedMs / 60000;
+      const cycleMinute = minutesElapsed % 45;
+      setElapsedSeconds(elapsed);
+      if (cycleMinute >= 30 && cycleMinute < 45) {
+        if (!sleeping) { setSleeping(true); setSignal(null); }
+        setSleepTimeRemaining(Math.ceil((45 - cycleMinute) * 60));
+        setCycleProgress((cycleMinute - 30) / 15 * 100);
+        return;
+      }
+      if (sleeping) { setSleeping(false); eventTimes.current = {}; }
+      setCycleProgress(cycleMinute / 30 * 100);
+      const previousTwo = Math.floor(cycleMinute / 2) * 2;
+      const previousFive = Math.floor(cycleMinute / 5) * 5;
+      const previousSeven = Math.floor(cycleMinute / 7) * 7;
+      const nextTwo = (Math.floor(cycleMinute / 2) + 1) * 2;
+      const nextFive = (Math.floor(cycleMinute / 5) + 1) * 5;
+      const nextSeven = (Math.floor(cycleMinute / 7) + 1) * 7;
+      const nextBoundary = Math.min(nextTwo, nextFive, nextSeven);
+      const secondsToNext = Math.max(0, Math.ceil((nextBoundary - cycleMinute) * 60));
+      setNextSignalIn(secondsToNext > 0 && secondsToNext < 300 ? secondsToNext : null);
+
+      let candidate: AviatorSignal | null = null;
+      let eventKey = '';
+      if (cycleMinute >= 7 && cycleMinute - previousSeven < .5) {
+        eventKey = `high-${previousSeven}`;
+        if (!eventTimes.current[eventKey]) candidate = { id: eventKey, type: 'high', message: 'PLAY NOW', multiplier: '5x - 15x', time: new Date() };
+      } else if (cycleMinute >= 5 && cycleMinute - previousFive < .5) {
+        eventKey = `medium-${previousFive}`;
+        if (!eventTimes.current[eventKey]) candidate = { id: eventKey, type: 'medium', message: 'PLAY NOW', multiplier: '3x - 5x', time: new Date() };
+      } else if (cycleMinute >= 2 && cycleMinute - previousTwo < .5) {
+        eventKey = `low-${previousTwo}`;
+        if (!eventTimes.current[eventKey]) candidate = { id: eventKey, type: 'low', message: 'PLAY NOW', multiplier: '2x - 3x', time: new Date() };
+      }
+      if (candidate && eventKey) {
+        eventTimes.current[eventKey] = Date.now();
+        setTotalSignals((current) => current + 1);
+        setHistory((current) => [candidate!, ...current].slice(0, 12));
+        const age = (Date.now() - eventTimes.current[eventKey]) / 1000;
+        if (age < 30) {
+          setSignal(candidate);
+          setCountdown(Math.ceil(30 - age));
+          if (age < .5 && !soundOff) playAviatorTone();
+        } else if (signal?.type === candidate.type) {
+          setSignal(null);
+          setCountdown(null);
+        }
+      }
+      Object.keys(eventTimes.current).forEach((key) => {
+        if (Date.now() - eventTimes.current[key] > 30000) delete eventTimes.current[key];
+      });
+      if (!candidate && signal && !Object.keys(eventTimes.current).some((key) => Date.now() - eventTimes.current[key] < 30000)) {
+        setSignal(null);
+        setCountdown(null);
+      }
+    }, 100);
+    return () => window.clearInterval(timer);
+  }, [running, startedAt, sleeping, signal, soundOff]);
+
+  return <div className="aviator-shell">
+    <AviatorParticles />
+    <div className="relative z-10 mx-auto min-h-[100dvh] max-w-4xl px-4 py-5 md:px-6 md:py-8">
+      <div className="mb-8 flex items-center justify-between gap-4">
+        <div><div className="font-orbitron text-xs font-bold tracking-[.22em] text-primary">AVIATOR PRO</div><div className="mt-1 text-[10px] uppercase tracking-[.25em] text-muted-foreground">Premium signal system v3.0</div></div>
+        <div className="text-right text-[10px] uppercase tracking-wider text-muted-foreground"><div className="text-primary">{platform === 'msport' ? 'MSport' : 'SportyBet'}</div><div>Protected terminal</div></div>
+      </div>
+      {!running ? <div className="space-y-6">
+        <div className="text-center"><h1 className="font-orbitron text-3xl font-bold text-primary drop-shadow-[0_0_12px_hsl(var(--primary)/.7)] md:text-5xl">SIGNAL SYSTEM</h1><p className="mt-2 text-sm uppercase tracking-[.3em] text-muted-foreground">Initialize your protected window</p></div>
+        <section className="aviator-card mx-auto max-w-xl p-5 md:p-7">
+          <div className="space-y-5">
+            <label className="grid gap-2 text-sm font-medium uppercase tracking-wider text-muted-foreground"><span className="flex items-center gap-2"><Activity size={16} className="text-primary" />Recent Multipliers</span><input className="aviator-input w-full" value={recentMultipliers} onChange={(event) => setRecentMultipliers(event.target.value)} placeholder="e.g., 2.5x, 1.8x, 3.2x, 1.1x" data-testid="input-recent-multipliers" /></label>
+            <label className="grid gap-2 text-sm font-medium uppercase tracking-wider text-muted-foreground"><span className="flex items-center gap-2"><Clock3 size={16} className="text-primary" />Start Time (24h format)</span><input type="time" className="aviator-input w-full" value={startTime} onChange={(event) => setStartTime(event.target.value)} data-testid="input-signal-start-time" /></label>
+            <button type="button" className="aviator-button flex w-full items-center justify-center gap-3" onClick={initialize} disabled={!recentMultipliers.trim() || !startTime} data-testid="button-initialize-system"><Zap size={19} />Initialize System</button>
+          </div>
+        </section>
+        <div className="grid grid-cols-3 gap-3">{[['2 MIN', '2x - 3x', 'text-primary'], ['5 MIN', '3x - 5x', 'text-[hsl(30_100%_55%)]'], ['7 MIN', '5x - 15x', 'text-accent']].map(([interval, range, color]) => <div key={interval} className="aviator-card p-4 text-center"><p className="text-xs uppercase text-muted-foreground">{interval}</p><p className={`mt-1 font-orbitron text-base ${color}`}>{range}</p></div>)}</div>
+      </div> : <div className="space-y-6">
+        <div className="flex justify-end"><button type="button" onClick={() => setSoundOff((current) => !current)} className="focus-ring inline-flex items-center gap-2 rounded-lg border border-primary/10 bg-secondary/50 px-4 py-2 text-sm" data-testid="button-sound-toggle">{soundOff ? <VolumeX size={18} className="text-muted-foreground" /> : <Volume2 size={18} className="text-primary" />}{soundOff ? 'Sound Off' : 'Sound On'}</button></div>
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">{[['Total Signals', totalSignals.toString(), 'text-primary'], ['Session Time', formatSessionTime(elapsedSeconds), 'text-accent'], ['Cycle Progress', `${Math.round(cycleProgress)}%`, 'text-[hsl(30_100%_55%)]'], ['Next Signal', nextSignalIn === null ? '--' : `${nextSignalIn}s`, 'text-accent']].map(([label, value, color]) => <div key={label} className="aviator-card p-4"><div className="text-xs uppercase tracking-wider text-muted-foreground">{label}</div><div className={`mt-2 font-orbitron text-lg ${color}`}>{value}</div></div>)}</div>
+        <section className="aviator-card p-5 md:p-7">
+          <div className="mb-3 flex items-center justify-between"><span className="text-xs uppercase tracking-wider text-muted-foreground">{sleeping ? 'Rest Period' : 'Active Cycle'}</span><span className="font-orbitron text-xs text-primary">{Math.round(cycleProgress)}%</span></div>
+          <div className="h-3 overflow-hidden rounded-full bg-[#14181f]"><div className="h-full rounded-full bg-gradient-to-r from-primary via-[hsl(30_100%_55%)] to-destructive transition-all" style={{ width: `${cycleProgress}%` }} /></div>
+          <div className="mt-3 text-xs text-muted-foreground">{sleeping ? `System resting · next cycle in ${formatTime(sleepTimeRemaining)}` : 'Signal windows are evaluated at the exact 2, 5, and 7 minute boundaries.'}</div>
+        </section>
+        <section className={`aviator-card p-8 text-center md:p-12 ${signal ? `aviator-signal-${signal.type}` : ''}`} data-testid="signal-display">
+          {sleeping ? <><div className="font-orbitron text-2xl text-muted-foreground">REST PERIOD</div><p className="mt-3 text-sm text-muted-foreground">No signal is active during the 15-minute recovery window.</p><div className="mt-6 font-orbitron text-3xl text-accent">{formatTime(sleepTimeRemaining)}</div></> : signal ? <><div className={`font-orbitron text-5xl font-bold ${signal.type === 'high' ? 'text-destructive' : signal.type === 'medium' ? 'text-[hsl(30_100%_55%)]' : 'text-primary'}`}>{signal.message}</div><div className="mt-5 font-orbitron text-4xl text-foreground">{signal.multiplier}</div><div className="mt-3 text-xs uppercase tracking-[.25em] text-muted-foreground">Signal expires in {countdown}s</div></> : <><div className="font-orbitron text-3xl text-muted-foreground">SCANNING</div><p className="mt-3 text-sm text-muted-foreground">Monitoring the active 30-minute cycle.</p><div className="mx-auto mt-6 size-3 animate-pulse rounded-full bg-primary shadow-[0_0_20px_hsl(var(--primary)/.8)]" /></>}
+        </section>
+        <section className="aviator-card p-5"><div className="flex items-center justify-between"><div><div className="text-xs uppercase tracking-wider text-muted-foreground">Signal history</div><h2 className="mt-1 font-orbitron text-lg text-primary">Recent alerts</h2></div><RefreshCw size={17} className="text-muted-foreground" /></div><div className="mt-4 divide-y divide-primary/10">{history.length ? history.map((item) => <div key={item.id} className="flex items-center justify-between py-3"><div className="flex items-center gap-3"><span className={`grid size-8 place-items-center rounded-lg ${item.type === 'high' ? 'bg-destructive/15 text-destructive' : item.type === 'medium' ? 'bg-[hsl(30_100%_55%/.15)] text-[hsl(30_100%_55%)]' : 'bg-primary/15 text-primary'}`}><Zap size={15} /></span><div><div className="font-orbitron text-sm">{item.multiplier}</div><div className="text-[11px] text-muted-foreground">{item.time.toLocaleTimeString()}</div></div></div><span className="text-xs font-semibold uppercase tracking-wider text-primary">PLAY NOW</span></div>) : <p className="py-8 text-center text-sm text-muted-foreground">No signal alerts yet.</p>}</div></section>
+        <ReferralCard code={referral.data?.code} confirmed={referral.data?.confirmed ?? 0} required={referral.data?.required ?? 0} rewardIssued={Boolean(referral.data?.rewardIssued)} />
+        <button type="button" onClick={terminate} className="flex w-full items-center justify-center gap-2 rounded-lg border border-accent/30 bg-accent/10 py-4 font-orbitron text-sm uppercase tracking-wider text-accent hover:bg-accent/20" data-testid="button-terminate-system"><X size={18} />Terminate System</button>
+      </div>}
+    </div>
+  </div>;
+}
+
 function Dashboard() {
   const [, setLocation] = useLocation();
-  const search = useSearch();
-  const platformParam = new URLSearchParams(search).get('platform');
-  const platform: BettingPlatform = platformParam === 'sportybet' ? 'sportybet' : 'msport';
+  const storedPlatform = typeof window !== 'undefined' ? window.sessionStorage.getItem('csb_platform') : null;
+  const platform: BettingPlatform = storedPlatform === 'sportybet' ? 'sportybet' : 'msport';
   const status = useGetAccessStatus();
   const authenticated = Boolean(status.data?.authenticated);
   const logout = useLogoutAccess();
-  const signal = useGetCurrentSignal({ query: { enabled: authenticated, queryKey: getGetCurrentSignalQueryKey() } });
-  const history = useGetSignalHistory({ query: { enabled: authenticated, queryKey: getGetSignalHistoryQueryKey() } });
   const referral = useGetReferralProgress({ query: { enabled: authenticated, queryKey: getGetReferralProgressQueryKey() } });
-  const streak = useGetStreak({ query: { enabled: authenticated, queryKey: getGetStreakQueryKey() } });
-  const [now, setNow] = useState(Date.now());
-  useEffect(() => { const timer = window.setInterval(() => setNow(Date.now()), 1000); return () => window.clearInterval(timer); }, []);
-  const secondsToResult = signal.data?.current ? Math.max(0, Math.round((new Date(signal.data.current.generatedAt).getTime() + signal.data.cycleSeconds * 1000 - now) / 1000)) : 0;
-  const signOut = () => logout.mutate(undefined, { onSettled: () => { queryClient.invalidateQueries({ queryKey: getGetAccessStatusQueryKey() }); setLocation('/'); } });
+  const signOut = () => logout.mutate(undefined, { onSettled: () => { window.sessionStorage.removeItem('csb_platform'); queryClient.invalidateQueries({ queryKey: getGetAccessStatusQueryKey() }); setLocation('/'); } });
   if (status.isLoading) return <TerminalShell onLogout={signOut}><LoadingBlocks /></TerminalShell>;
   if (status.isError || !authenticated) return <TerminalShell onLogout={signOut}><div className="mx-auto max-w-lg py-16 text-center"><div className="mx-auto grid size-14 place-items-center rounded-2xl bg-secondary text-muted-foreground"><KeyRound /></div><h1 className="mt-6 text-3xl font-semibold tracking-[-.06em]">Your window is closed.</h1><p className="mt-3 text-sm leading-6 text-muted-foreground">Enter a valid access key or purchase a new signal window to continue.</p><Link href="/" className="focus-ring mt-7 inline-flex min-h-11 items-center gap-2 rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground" data-testid="link-return-access">Return to access <ArrowRight size={15} /></Link></div></TerminalShell>;
-  return <TerminalShell onLogout={signOut}><PageHeader eyebrow="Protected terminal" title="Signal window"><div className="flex flex-col items-stretch gap-2 sm:items-end"><div className="flex items-center gap-2 rounded-lg border border-primary/25 bg-primary/[.06] px-3 py-2 text-xs"><span className="text-muted-foreground">Platform</span><span className="font-semibold text-primary">{platform === 'msport' ? 'MSport' : 'SportyBet'}</span><span className="text-border">·</span><span className="text-muted-foreground">Access</span><span className="mono text-primary">{status.data?.keyPrefix ?? '••••'} · {formatTime(status.data?.remainingSeconds ?? 0)}</span></div><div className="flex items-center gap-2 text-xs text-muted-foreground"><span>Switch platform</span>{bettingPlatforms.map((option) => <button key={option.value} type="button" onClick={() => setLocation(`/dashboard?platform=${option.value}`)} className={`focus-ring rounded-md px-2 py-1 font-semibold ${platform === option.value ? 'bg-primary/10 text-primary' : 'hover:bg-secondary hover:text-foreground'}`} data-testid={`button-dashboard-platform-${option.value}`}>{option.label}</button>)}</div></div></PageHeader>
-     <div className="grid gap-4 lg:grid-cols-[1.3fr_.7fr]"><section className="scanline rounded-2xl border border-primary/35 bg-card p-5 shadow-[0_20px_55px_rgba(0,0,0,.2)] sm:p-7"><div className="flex items-start justify-between"><div><StatusDot label={`${platform === 'msport' ? 'MSport' : 'SportyBet'} signal`} /><div className="mt-5 flex items-end gap-2"><span className="text-7xl font-semibold tracking-[-.1em] text-primary sm:text-8xl" data-testid="text-current-multiplier">{signal.isLoading ? '—' : signal.data?.current.multiplier.toFixed(2)}</span><span className="mb-3 text-2xl text-primary">×</span></div></div><div className="rounded-full border border-primary/30 px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-primary">Live</div></div><div className="mt-8 grid grid-cols-2 gap-4 border-t border-border pt-5 sm:grid-cols-3"><div><div className="text-xs text-muted-foreground">Window closes</div><div className="mono mt-2 text-lg" data-testid="text-countdown">{formatTime(secondsToResult)}</div></div><div><div className="text-xs text-muted-foreground">Next signal</div><div className="mono mt-2 text-lg text-accent" data-testid="text-next-multiplier">{signal.data?.next ? `${signal.data.next.multiplier.toFixed(2)}×` : '—'}</div></div><div className="hidden sm:block"><div className="text-xs text-muted-foreground">Last sync</div><div className="mono mt-2 text-sm">{signal.data ? formatDate(signal.data.serverTime) : '—'}</div></div></div></section><section className="rounded-2xl border border-border bg-card p-5"><StatusDot label="Access status" tone="live" /><div className="mt-6 text-3xl font-semibold tracking-[-.06em]">{formatTime(status.data?.remainingSeconds ?? 0)}</div><p className="mt-1 text-sm text-muted-foreground">remaining in your paid window</p><div className="mt-7 h-2 overflow-hidden rounded-full bg-secondary"><div className="h-full rounded-full bg-primary transition-all" style={{ width: `${Math.min(100, ((status.data?.remainingSeconds ?? 0) / Math.max(1, (status.data?.remainingSeconds ?? 0) + 3600)) * 100)}%` }} /></div><div className="mt-3 flex justify-between text-xs text-muted-foreground"><span>{status.data?.source ?? 'access key'}</span><span>expires {formatDate(status.data?.expiresAt)}</span></div></section></div>
-    <div className="mt-4 grid gap-4 lg:grid-cols-[1.1fr_.9fr]"><section className="rounded-xl border border-border bg-card p-5"><div className="flex items-center justify-between"><div><div className="text-[11px] font-semibold uppercase tracking-[.16em] text-primary">Signal history</div><h2 className="mt-2 text-xl font-semibold tracking-[-.05em]">Recent windows</h2></div><RefreshCw size={16} className="text-muted-foreground" /></div><div className="mt-5 divide-y divide-border">{history.isLoading ? <LoadingRows count={4} /> : history.isError ? <InlineError onRetry={() => history.refetch()} /> : (history.data ?? []).length === 0 ? <Empty label="No signal history yet." /> : history.data?.slice(0, 6).map((item) => <SignalRow key={item.id} item={item} />)}</div></section><div className="grid gap-4"><ProgressCard title="Referral path" icon={<Users size={17} />} value={referral.data ? `${referral.data.confirmed} / ${referral.data.required}` : '—'} detail={referral.data?.rewardIssued ? 'Reward issued' : 'confirmed referrals'} progress={referral.data ? (referral.data.confirmed / Math.max(referral.data.required, 1)) * 100 : 0} footer={referral.data?.code ? `Your code · ${referral.data.code}` : 'Referral code unavailable'} /><ProgressCard title="Streak" icon={<TrendingUp size={17} />} value={streak.data ? `${streak.data.current} days` : '—'} detail={streak.data ? `${streak.data.discountPercent}% discount unlocked` : 'activity streak'} progress={streak.data ? Math.min(100, streak.data.current * 10) : 0} footer={streak.data ? `Longest · ${streak.data.longest} days` : 'Keep showing up with intention'} /></div></div>
-    <div className="mt-4 rounded-xl border border-border bg-secondary/30 p-4 text-xs leading-5 text-muted-foreground"><span className="font-semibold text-foreground">Responsible use.</span> Signals are informational and do not guarantee outcomes. Set a loss limit before entering a window; never chase a result.</div>
-  </TerminalShell>;
-}
-
-function SignalRow({ item }: { item: SignalRecord }) {
-  const positive = item.status.toLowerCase().includes('win') || item.status.toLowerCase().includes('success');
-  return <div className="flex items-center justify-between py-3" data-testid={`row-signal-${item.id}`}><div className="flex items-center gap-3"><span className={`grid size-8 place-items-center rounded-lg ${positive ? 'bg-primary/10 text-primary' : 'bg-secondary text-muted-foreground'}`}>{positive ? <Check size={15} /> : <Clock3 size={15} />}</span><div><div className="mono text-sm">{item.multiplier.toFixed(2)}×</div><div className="text-[11px] text-muted-foreground">{formatDate(item.generatedAt)}</div></div></div><span className={`text-xs font-semibold uppercase tracking-wider ${positive ? 'text-primary' : 'text-muted-foreground'}`}>{item.status}</span></div>;
+  return <AviatorSignalDashboard platform={platform} referral={referral} />;
 }
 function ProgressCard({ title, icon, value, detail, progress, footer }: { title: string; icon: ReactNode; value: string; detail: string; progress: number; footer: string }) {
   return <div className="rounded-xl border border-border bg-card p-5"><div className="flex items-center gap-2 text-sm font-semibold">{icon}{title}</div><div className="mt-6 flex items-end justify-between"><div><div className="text-3xl font-semibold tracking-[-.07em]">{value}</div><div className="mt-1 text-xs text-muted-foreground">{detail}</div></div><Sparkles size={17} className="text-primary" /></div><div className="mt-5 h-1.5 overflow-hidden rounded-full bg-secondary"><div className="h-full rounded-full bg-primary transition-all" style={{ width: `${Math.min(100, progress)}%` }} /></div><div className="mt-3 text-[11px] text-muted-foreground">{footer}</div></div>;

@@ -194,7 +194,8 @@ export async function ensureSystemData() {
   }
 }
 
-router.get("/public/config", async (_req, res) => {
+router.get("/public/config", async (req, res) => {
+  await ensureIdentity(req, res);
   res.json(await publicConfig());
 });
 
