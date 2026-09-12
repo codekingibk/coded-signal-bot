@@ -119,7 +119,7 @@ function PageHeader({ title, eyebrow, children }: { title: string; eyebrow: stri
 }
 
 function PublicNav() {
-  return <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-5 py-5 sm:px-8"><Brand /><nav className="hidden items-center gap-6 text-sm text-muted-foreground sm:flex"><a className="hover:text-foreground" href="#how-it-works">How it works</a><a className="hover:text-foreground" href="#faq">FAQ</a><a className="hover:text-foreground" href="#pricing">Access</a></nav><Link href="/admin" className="focus-ring rounded-md px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground" data-testid="link-admin">Admin console <ArrowRight size={14} className="ml-1 inline" /></Link></header>;
+  return <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-5 py-5 sm:px-8"><Brand /><nav className="hidden items-center gap-6 text-sm text-muted-foreground sm:flex"><a className="hover:text-foreground" href="#how-it-works">How it works</a><a className="hover:text-foreground" href="#faq">FAQ</a><a className="hover:text-foreground" href="#pricing">Pricing</a></nav><div className="flex items-center gap-2"><Link href="/access" className="focus-ring inline-flex min-h-10 items-center gap-2 rounded-lg bg-primary px-4 text-xs font-semibold text-primary-foreground hover:brightness-105" data-testid="link-nav-access">Access terminal <ArrowRight size={14} /></Link><Link href="/admin" className="focus-ring hidden rounded-md px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground sm:inline-flex" data-testid="link-admin">Admin console <ArrowRight size={14} className="ml-1 inline" /></Link></div></header>;
 }
 
 function AccessPage() {
@@ -295,6 +295,18 @@ function formatSessionTime(seconds: number) {
   return `${Math.floor(seconds / 60).toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}`;
 }
 
+function SignalVisual({ signal, countdown, sleeping, sleepTimeRemaining }: { signal: AviatorSignal | null; countdown: number | null; sleeping: boolean; sleepTimeRemaining: number }) {
+  const total = sleeping ? 900 : 30;
+  const remaining = sleeping ? sleepTimeRemaining : (countdown ?? 0);
+  const circumference = 2 * Math.PI * 45;
+  const dashOffset = circumference * (1 - Math.max(0, Math.min(1, remaining / total)));
+  const ringColor = signal?.type === 'high' ? 'hsl(var(--destructive))' : signal?.type === 'medium' ? 'hsl(30 100% 55%)' : 'hsl(var(--primary))';
+
+  return <section className={`aviator-card p-8 text-center md:p-12 ${signal ? `aviator-signal-${signal.type}` : ''}`} data-testid="signal-display">
+    {sleeping ? <><div className="font-orbitron text-2xl text-muted-foreground">REST PERIOD</div><div className="relative mx-auto mt-6 size-28"><svg className="size-full -rotate-90" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="45" fill="none" stroke="hsl(var(--muted))" strokeWidth="4" /><circle cx="50" cy="50" r="45" fill="none" stroke="hsl(var(--accent))" strokeWidth="4" strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={dashOffset} /></svg><span className="absolute inset-0 grid place-items-center font-orbitron text-xl text-accent">{formatTime(sleepTimeRemaining)}</span></div><p className="mt-4 text-xs uppercase tracking-[.2em] text-muted-foreground">Next cycle starting soon</p></> : signal ? <><div className={`flex items-center justify-center gap-3 font-orbitron text-2xl font-bold ${signal.type === 'high' ? 'text-destructive' : signal.type === 'medium' ? 'text-[hsl(30_100%_55%)]' : 'text-primary'}`}><Zap size={22} className="animate-pulse" />PLAY NOW</div><div className={`mt-4 font-orbitron text-3xl font-bold ${signal.type === 'high' ? 'text-destructive' : signal.type === 'medium' ? 'text-[hsl(30_100%_55%)]' : 'text-primary'}`}>CATCH {signal.multiplier}</div><div className="relative mx-auto mt-7 size-28"><svg className="size-full -rotate-90" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="45" fill="none" stroke="hsl(var(--muted))" strokeWidth="4" /><circle cx="50" cy="50" r="45" fill="none" stroke={ringColor} strokeWidth="4" strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={dashOffset} /></svg><span className="absolute inset-0 grid place-items-center font-orbitron text-2xl" style={{ color: ringColor }}>{countdown ?? 0}s</span></div><p className="mt-2 text-xs uppercase tracking-[.2em] text-muted-foreground">Signal active</p></> : <><div className="mx-auto grid size-20 place-items-center rounded-full border border-primary/30 bg-primary/5 text-primary shadow-[0_0_35px_hsl(var(--primary)/.14)]"><Activity size={32} className="animate-pulse" /></div><div className="mt-5 font-orbitron text-2xl text-muted-foreground">WAITING FOR SIGNAL</div><p className="mt-3 text-sm text-muted-foreground">Monitoring the active signal window.</p></>}
+  </section>;
+}
+
 function ReferralCard({ code, confirmed, required, rewardIssued }: { code?: string; confirmed: number; required: number; rewardIssued: boolean }) {
   const [copied, setCopied] = useState(false);
   const referralLink = code ? `${window.location.origin}/?ref=${encodeURIComponent(code)}` : '';
@@ -335,18 +347,19 @@ function AviatorSignalDashboard({ platform, referral }: { platform: BettingPlatf
     const now = new Date();
     const candidate = new Date();
     candidate.setHours(hours, minutes, 0, 0);
+    const initialSignal: AviatorSignal = { id: `initial-low-${Date.now()}`, type: 'low', message: 'PLAY NOW', multiplier: '2x - 3x', time: now };
     setStartedAt(candidate < now ? candidate : now);
     setRunning(true);
-    setSignal(null);
-    setHistory([]);
-    setTotalSignals(0);
+    setSignal(initialSignal);
+    setHistory([initialSignal]);
+    setTotalSignals(1);
     setElapsedSeconds(0);
     setCycleProgress(0);
-    setNextSignalIn(null);
-    setCountdown(null);
+    setCountdown(30);
+    setNextSignalIn(90);
     setSleeping(false);
     setSleepTimeRemaining(0);
-    eventTimes.current = {};
+    eventTimes.current = { [initialSignal.id]: Date.now() };
   };
 
   const terminate = () => {
@@ -447,9 +460,7 @@ function AviatorSignalDashboard({ platform, referral }: { platform: BettingPlatf
           <div className="h-3 overflow-hidden rounded-full bg-[#14181f]"><div className="h-full rounded-full bg-gradient-to-r from-primary via-[hsl(30_100%_55%)] to-destructive transition-all" style={{ width: `${cycleProgress}%` }} /></div>
           <div className="mt-3 text-xs text-muted-foreground">{sleeping ? `System resting · next cycle in ${formatTime(sleepTimeRemaining)}` : 'Signal windows are evaluated continuously during the active cycle.'}</div>
         </section>
-        <section className={`aviator-card p-8 text-center md:p-12 ${signal ? `aviator-signal-${signal.type}` : ''}`} data-testid="signal-display">
-          {sleeping ? <><div className="font-orbitron text-2xl text-muted-foreground">REST PERIOD</div><p className="mt-3 text-sm text-muted-foreground">No signal is active during the 15-minute recovery window.</p><div className="mt-6 font-orbitron text-3xl text-accent">{formatTime(sleepTimeRemaining)}</div></> : signal ? <><div className={`font-orbitron text-5xl font-bold ${signal.type === 'high' ? 'text-destructive' : signal.type === 'medium' ? 'text-[hsl(30_100%_55%)]' : 'text-primary'}`}>{signal.message}</div><div className="mt-5 font-orbitron text-4xl text-foreground">{signal.multiplier}</div><div className="mt-3 text-xs uppercase tracking-[.25em] text-muted-foreground">Signal expires in {countdown}s</div></> : <><div className="font-orbitron text-3xl text-muted-foreground">SCANNING</div><p className="mt-3 text-sm text-muted-foreground">Monitoring the active 30-minute cycle.</p><div className="mx-auto mt-6 size-3 animate-pulse rounded-full bg-primary shadow-[0_0_20px_hsl(var(--primary)/.8)]" /></>}
-        </section>
+        <SignalVisual signal={signal} countdown={countdown} sleeping={sleeping} sleepTimeRemaining={sleepTimeRemaining} />
         <section className="aviator-card p-5"><div className="flex items-center justify-between"><div><div className="text-xs uppercase tracking-wider text-muted-foreground">Signal history</div><h2 className="mt-1 font-orbitron text-lg text-primary">Recent alerts</h2></div><RefreshCw size={17} className="text-muted-foreground" /></div><div className="mt-4 divide-y divide-primary/10">{history.length ? history.map((item) => <div key={item.id} className="flex items-center justify-between py-3"><div className="flex items-center gap-3"><span className={`grid size-8 place-items-center rounded-lg ${item.type === 'high' ? 'bg-destructive/15 text-destructive' : item.type === 'medium' ? 'bg-[hsl(30_100%_55%/.15)] text-[hsl(30_100%_55%)]' : 'bg-primary/15 text-primary'}`}><Zap size={15} /></span><div><div className="font-orbitron text-sm">{item.multiplier}</div><div className="text-[11px] text-muted-foreground">{item.time.toLocaleTimeString()}</div></div></div><span className="text-xs font-semibold uppercase tracking-wider text-primary">PLAY NOW</span></div>) : <p className="py-8 text-center text-sm text-muted-foreground">No signal alerts yet.</p>}</div></section>
         <ReferralCard code={referral.data?.code} confirmed={referral.data?.confirmed ?? 0} required={referral.data?.required ?? 0} rewardIssued={Boolean(referral.data?.rewardIssued)} />
         <button type="button" onClick={terminate} className="flex w-full items-center justify-center gap-2 rounded-lg border border-accent/30 bg-accent/10 py-4 font-orbitron text-sm uppercase tracking-wider text-accent hover:bg-accent/20" data-testid="button-terminate-system"><X size={18} />Terminate System</button>
