@@ -3,16 +3,7 @@
   "installCommand": "pnpm install --frozen-lockfile",
   "buildCommand": "pnpm --filter @workspace/coded-signal-bot build",
   "outputDirectory": "artifacts/coded-signal-bot/dist/public",
-  "functions": {
-    "api/index.ts": {
-      "runtime": "nodejs24.x"
-    }
-  },
   "rewrites": [
-    {
-      "source": "/api/:path*",
-      "destination": "/api/index?__path=:path*"
-    },
     {
       "source": "/((?!api(?:/|$)).*)",
       "destination": "/index.html"
