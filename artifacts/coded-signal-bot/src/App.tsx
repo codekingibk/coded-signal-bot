@@ -67,6 +67,12 @@ const bettingPlatforms: { value: BettingPlatform; label: string }[] = [
   { value: 'sportybet', label: 'SportyBet' },
 ];
 
+const startTimeOptions = Array.from({ length: 24 * 12 }, (_, index) => {
+  const hour = Math.floor(index / 12).toString().padStart(2, '0');
+  const minute = ((index % 12) * 5).toString().padStart(2, '0');
+  return `${hour}:${minute}`;
+});
+
 function PlatformSelector({ value, onChange }: { value: BettingPlatform; onChange: (value: BettingPlatform) => void }) {
   return <div className="grid gap-2">
     <span className="text-xs font-medium text-muted-foreground">Betting platform</span>
@@ -450,7 +456,7 @@ function AviatorSignalDashboard({ platform, referral }: { platform: BettingPlatf
         <section className="aviator-card mx-auto max-w-xl p-5 md:p-7">
           <div className="space-y-5">
             <label className="grid gap-2 text-sm font-medium uppercase tracking-wider text-muted-foreground"><span className="flex items-center gap-2"><Activity size={16} className="text-primary" />Recent Multipliers</span><input className="aviator-input w-full" value={recentMultipliers} onChange={(event) => setRecentMultipliers(event.target.value)} placeholder="e.g., 2.5x, 1.8x, 3.2x, 1.1x" data-testid="input-recent-multipliers" /></label>
-            <label className="grid gap-2 text-sm font-medium uppercase tracking-wider text-muted-foreground"><span className="flex items-center gap-2"><Clock3 size={16} className="text-primary" />Start Time (24h format)</span><input type="time" className="aviator-input w-full" value={startTime} onChange={(event) => setStartTime(event.target.value)} data-testid="input-signal-start-time" /></label>
+            <label className="grid gap-2 text-sm font-medium uppercase tracking-wider text-muted-foreground"><span className="flex items-center gap-2"><Clock3 size={16} className="text-primary" />Start time</span><select className="aviator-input w-full" value={startTime} onChange={(event) => setStartTime(event.target.value)} data-testid="input-signal-start-time"><option value="">Choose a time</option>{startTimeOptions.map((time) => <option key={time} value={time}>{time}</option>)}</select></label>
             <button type="button" className="aviator-button flex w-full items-center justify-center gap-3" onClick={initialize} disabled={!recentMultipliers.trim() || !startTime} data-testid="button-initialize-system"><Zap size={19} />Initialize System</button>
           </div>
         </section>
