@@ -1,11 +1,11 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "pnpm install --frozen-lockfile",
-  "buildCommand": "pnpm --filter @workspace/coded-signal-bot build",
-  "outputDirectory": "artifacts/coded-signal-bot/dist/public",
+  "buildCommand": "cd ../.. && pnpm --filter @workspace/coded-signal-bot build",
+  "outputDirectory": "dist/public",
   "rewrites": [
     {
-      "source": "/((?!api(?:/|$)).*)",
+      "source": "/(.*)",
       "destination": "/index.html"
     }
   ]
